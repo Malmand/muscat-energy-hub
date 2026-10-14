@@ -1,0 +1,5 @@
+# separate environment for omegalpes_crosscheck.py only (OMEGAlpes 0.5 needs PuLP 2 and pandas 2.2)
+omegalpes==0.5.0
+pulp==2.9.0
+pandas==2.2.3
+numpy<2.3

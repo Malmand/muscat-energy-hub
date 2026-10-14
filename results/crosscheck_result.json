@@ -1,0 +1,26 @@
+{
+ "storage_and_operation_cost": {
+  "pyomo": 172179.77810800503,
+  "omegalpes": 172179.7783182579
+ },
+ "battery": {
+  "pyomo": -0.0,
+  "omegalpes": 0.0
+ },
+ "cold_storage": {
+  "pyomo": 1081.848322500423,
+  "omegalpes": 1081.8483
+ },
+ "h2_tank": {
+  "pyomo": 16.66666666666667,
+  "omegalpes": 16.666667
+ },
+ "import_MWh": {
+  "pyomo": 1548.705579422504,
+  "omegalpes": 1548.7055773350014
+ },
+ "export_MWh": {
+  "pyomo": 1094.0249385555114,
+  "omegalpes": 1094.0249400011432
+ }
+}
