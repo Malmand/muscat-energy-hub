@@ -1,74 +1,75 @@
-2026-10-14 21:59:40,830 INFO inputs: 2016 hours in 12 blocks
-2026-10-14 21:59:48,558 INFO check: weather ok: 8760 h, T 10.8-41.2 C, GHI 2209 kWh/m2
-2026-10-14 21:59:48,558 INFO check: pv ok: 1999 kWh/kWp without and 1829 with temperature effects
-2026-10-14 21:59:48,558 INFO check: villa calibration ok: cooled fraction 0.46
-2026-10-14 21:59:48,558 INFO check: building model ok: optimisation follows the simulation within 0.000 K (99th percentile, cooled hours)
-2026-10-14 22:01:00,815 INFO check: representative weeks ok: +0.34 % against the full year
-2026-10-14 22:01:00,815 INFO check: energy balance ok (max residual 1.0e-12 kW)
-2026-10-14 22:01:00,815 INFO run: all simple
-2026-10-14 22:01:07,909 INFO   cost 268731 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:01:07,909 INFO run: detailed pv only
-2026-10-14 22:01:14,885 INFO   cost 283170 USD/y | pv 1591 battery -0 chiller 2134 cold_storage 5795 electrolyser 109 h2_tank 20
-2026-10-14 22:01:14,885 INFO run: detailed battery only
-2026-10-14 22:01:21,904 INFO   cost 268731 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:01:21,904 INFO run: detailed chiller only
-2026-10-14 22:01:32,494 INFO   cost 259290 USD/y | pv 1591 battery -0 chiller 1957 cold_storage 5364 electrolyser 113 h2_tank 21
-2026-10-14 22:01:32,495 INFO run: detailed cold_storage only
-2026-10-14 22:01:40,334 INFO   cost 273900 USD/y | pv 1591 battery -0 chiller 2116 cold_storage 5646 electrolyser 113 h2_tank 21
-2026-10-14 22:01:40,334 INFO run: detailed electrolyser only
-2026-10-14 22:02:19,226 INFO     electrolyser   95 kW -> 269260 USD/y
-2026-10-14 22:02:49,424 INFO     electrolyser  111 kW -> 268996 USD/y
-2026-10-14 22:02:58,128 INFO     electrolyser  127 kW -> 270790 USD/y
-2026-10-14 22:03:35,550 INFO     electrolyser  103 kW -> 269168 USD/y
-2026-10-14 22:04:05,751 INFO     electrolyser  119 kW -> 269420 USD/y
-2026-10-14 22:04:44,913 INFO     electrolyser  107 kW -> 269166 USD/y
-2026-10-14 22:04:53,650 INFO     electrolyser  115 kW -> 269437 USD/y
-2026-10-14 22:05:23,847 INFO     electrolyser  109 kW -> 269013 USD/y
-2026-10-14 22:05:54,555 INFO     electrolyser  113 kW -> 268899 USD/y
-2026-10-14 22:05:54,557 INFO   cost 268899 USD/y | pv 1591 battery 0 chiller 2144 cold_storage 5775 electrolyser 113 h2_tank 21
-2026-10-14 22:05:54,557 INFO run: detailed building only
-2026-10-14 22:06:13,015 INFO   cost 249028 USD/y | pv 1591 battery -0 chiller 1939 cold_storage 3511 electrolyser 109 h2_tank 20
-2026-10-14 22:06:13,015 INFO run: simple design, detailed pv in operation
-2026-10-14 22:06:17,481 INFO   cost 283197 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:06:17,481 INFO run: simple design, detailed battery in operation
-2026-10-14 22:06:22,120 INFO   cost 268731 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:06:22,120 INFO run: simple design, detailed chiller in operation
-2026-10-14 22:06:26,597 INFO   cost 259947 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:06:26,597 INFO run: simple design, detailed cold_storage in operation
-2026-10-14 22:06:31,576 INFO   cost 273941 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:06:31,576 INFO run: simple design, detailed electrolyser in operation
-2026-10-14 22:06:40,177 INFO   cost 268900 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:06:40,177 INFO run: simple design, detailed building in operation
-2026-10-14 22:06:46,771 INFO   cost 250912 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:06:46,772 INFO run: all detailed
-2026-10-14 22:07:45,013 INFO     electrolyser   95 kW -> 259628 USD/y
-2026-10-14 22:08:47,208 INFO     electrolyser  111 kW -> 258844 USD/y
-2026-10-14 22:09:08,282 INFO     electrolyser  127 kW -> 260305 USD/y
-2026-10-14 22:10:09,607 INFO     electrolyser  103 kW -> 259137 USD/y
-2026-10-14 22:10:29,282 INFO     electrolyser  119 kW -> 259456 USD/y
-2026-10-14 22:11:30,609 INFO     electrolyser  107 kW -> 258991 USD/y
-2026-10-14 22:11:49,448 INFO     electrolyser  115 kW -> 259200 USD/y
-2026-10-14 22:12:57,397 INFO     electrolyser  109 kW -> 258906 USD/y
-2026-10-14 22:13:28,597 INFO     electrolyser  113 kW -> 259122 USD/y
-2026-10-14 22:13:28,600 INFO   cost 258844 USD/y | pv 1591 battery -0 chiller 1777 cold_storage 2516 electrolyser 111 h2_tank 21
-2026-10-14 22:13:28,600 INFO run: simple design, all detailed in operation
-2026-10-14 22:14:09,746 INFO   cost 264106 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
-2026-10-14 22:14:09,747 INFO run: thermostat 25 C (simulated load)
-2026-10-14 22:14:20,363 INFO   cost 261768 USD/y | pv 1591 battery -0 chiller 1695 cold_storage 3719 electrolyser 111 h2_tank 22
-2026-10-14 22:14:20,363 INFO run: building model, band 25-25 C
-2026-10-14 22:16:24,038 INFO   cost 262500 USD/y | pv 1591 battery 0 chiller 1687 cold_storage 3654 electrolyser 111 h2_tank 21
-2026-10-14 22:16:24,038 INFO run: building model, band 24-25 C
-2026-10-14 22:17:40,920 INFO   cost 260107 USD/y | pv 1591 battery -0 chiller 1731 cold_storage 2864 electrolyser 111 h2_tank 22
-2026-10-14 22:17:40,920 INFO run: building model, band 23-25 C
-2026-10-14 22:18:41,985 INFO   cost 258844 USD/y | pv 1591 battery -0 chiller 1777 cold_storage 2516 electrolyser 111 h2_tank 21
-2026-10-14 22:18:41,985 INFO run: building model, band 22-25 C
-2026-10-14 22:21:34,346 INFO   cost 258419 USD/y | pv 1591 battery -0 chiller 1814 cold_storage 2337 electrolyser 111 h2_tank 22
-2026-10-14 22:21:34,346 INFO run: chilled-water storage 50 USD/kWh
-2026-10-14 22:23:42,101 INFO   cost 261861 USD/y | pv 1591 battery -0 chiller 1611 cold_storage 967 electrolyser 111 h2_tank 21
-2026-10-14 22:23:42,101 INFO run: chilled-water storage 250 USD/kWh
-2026-10-14 22:25:34,196 INFO   cost 263628 USD/y | pv 1591 battery 0 chiller 1608 cold_storage 0 electrolyser 111 h2_tank 21
-2026-10-14 22:25:34,196 INFO run: battery 200 USD/kWh
-2026-10-14 22:29:03,122 INFO   cost 258822 USD/y | pv 1591 battery -0 chiller 1778 cold_storage 2526 electrolyser 111 h2_tank 22
-2026-10-14 22:29:03,123 INFO run: battery 500 USD/kWh
-2026-10-14 22:30:27,723 INFO   cost 258796 USD/y | pv 1591 battery 0 chiller 1777 cold_storage 2526 electrolyser 111 h2_tank 21
-2026-10-14 22:30:27,723 INFO done in 30.8 min
+2026-10-14 23:31:01,582 INFO inputs: 2016 hours in 12 blocks
+2026-10-14 23:31:09,094 INFO check: weather ok: 8760 h, T 10.8-41.2 C, GHI 2209 kWh/m2
+2026-10-14 23:31:09,095 INFO check: pv ok: 1999 kWh/kWp without and 1829 with temperature effects
+2026-10-14 23:31:09,095 INFO check: villa calibration ok: cooled fraction 0.46
+2026-10-14 23:31:09,095 INFO check: scaling ok: matrix coefficients between 1.7e-03 and 4.7e+01
+2026-10-14 23:31:09,095 INFO check: building model ok: optimisation follows the simulation within 0.000 K (99th percentile, cooled hours)
+2026-10-14 23:32:15,098 INFO check: representative weeks ok: +0.34 % against the full year
+2026-10-14 23:32:15,098 INFO check: energy balance ok (max residual 1.0e-12 kW)
+2026-10-14 23:32:15,098 INFO run: all simple
+2026-10-14 23:32:22,787 INFO   cost 268731 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:32:22,787 INFO run: detailed pv only
+2026-10-14 23:32:29,586 INFO   cost 283170 USD/y | pv 1591 battery -0 chiller 2134 cold_storage 5795 electrolyser 109 h2_tank 20
+2026-10-14 23:32:29,586 INFO run: detailed battery only
+2026-10-14 23:32:35,783 INFO   cost 268731 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:32:35,783 INFO run: detailed chiller only
+2026-10-14 23:32:46,401 INFO   cost 259290 USD/y | pv 1591 battery -0 chiller 1957 cold_storage 5364 electrolyser 113 h2_tank 21
+2026-10-14 23:32:46,401 INFO run: detailed cold_storage only
+2026-10-14 23:32:53,864 INFO   cost 273900 USD/y | pv 1591 battery -0 chiller 2116 cold_storage 5646 electrolyser 113 h2_tank 21
+2026-10-14 23:32:53,864 INFO run: detailed electrolyser only
+2026-10-14 23:33:31,957 INFO     electrolyser   95 kW -> 269260 USD/y
+2026-10-14 23:34:00,306 INFO     electrolyser  111 kW -> 268996 USD/y
+2026-10-14 23:34:08,126 INFO     electrolyser  127 kW -> 270790 USD/y
+2026-10-14 23:34:40,158 INFO     electrolyser  103 kW -> 269168 USD/y
+2026-10-14 23:35:08,462 INFO     electrolyser  119 kW -> 269420 USD/y
+2026-10-14 23:35:43,029 INFO     electrolyser  107 kW -> 269166 USD/y
+2026-10-14 23:35:50,490 INFO     electrolyser  115 kW -> 269437 USD/y
+2026-10-14 23:36:16,222 INFO     electrolyser  109 kW -> 269013 USD/y
+2026-10-14 23:36:45,790 INFO     electrolyser  113 kW -> 268899 USD/y
+2026-10-14 23:36:45,793 INFO   cost 268899 USD/y | pv 1591 battery 0 chiller 2144 cold_storage 5775 electrolyser 113 h2_tank 21
+2026-10-14 23:36:45,793 INFO run: detailed building only
+2026-10-14 23:37:03,431 INFO   cost 249028 USD/y | pv 1591 battery -0 chiller 1939 cold_storage 3511 electrolyser 109 h2_tank 20
+2026-10-14 23:37:03,431 INFO run: simple design, detailed pv in operation
+2026-10-14 23:37:07,985 INFO   cost 283197 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:37:07,986 INFO run: simple design, detailed battery in operation
+2026-10-14 23:37:12,554 INFO   cost 268731 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:37:12,554 INFO run: simple design, detailed chiller in operation
+2026-10-14 23:37:16,863 INFO   cost 259947 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:37:16,863 INFO run: simple design, detailed cold_storage in operation
+2026-10-14 23:37:21,468 INFO   cost 273941 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:37:21,468 INFO run: simple design, detailed electrolyser in operation
+2026-10-14 23:37:29,385 INFO   cost 268900 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:37:29,385 INFO run: simple design, detailed building in operation
+2026-10-14 23:37:35,388 INFO   cost 250912 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:37:35,388 INFO run: all detailed
+2026-10-14 23:38:30,054 INFO     electrolyser   95 kW -> 259628 USD/y
+2026-10-14 23:39:26,904 INFO     electrolyser  111 kW -> 258844 USD/y
+2026-10-14 23:39:45,848 INFO     electrolyser  127 kW -> 260305 USD/y
+2026-10-14 23:40:44,724 INFO     electrolyser  103 kW -> 259137 USD/y
+2026-10-14 23:41:03,880 INFO     electrolyser  119 kW -> 259456 USD/y
+2026-10-14 23:42:04,276 INFO     electrolyser  107 kW -> 258991 USD/y
+2026-10-14 23:42:23,124 INFO     electrolyser  115 kW -> 259200 USD/y
+2026-10-14 23:43:25,391 INFO     electrolyser  109 kW -> 258906 USD/y
+2026-10-14 23:43:55,247 INFO     electrolyser  113 kW -> 259122 USD/y
+2026-10-14 23:43:55,250 INFO   cost 258844 USD/y | pv 1591 battery -0 chiller 1777 cold_storage 2516 electrolyser 111 h2_tank 21
+2026-10-14 23:43:55,250 INFO run: simple design, all detailed in operation
+2026-10-14 23:44:30,805 INFO   cost 264106 USD/y | pv 1591 battery -0 chiller 2140 cold_storage 5770 electrolyser 111 h2_tank 21
+2026-10-14 23:44:30,806 INFO run: thermostat 25 C (simulated load)
+2026-10-14 23:44:40,564 INFO   cost 261768 USD/y | pv 1591 battery -0 chiller 1695 cold_storage 3719 electrolyser 111 h2_tank 22
+2026-10-14 23:44:40,564 INFO run: building model, band 25-25 C
+2026-10-14 23:46:32,733 INFO   cost 262500 USD/y | pv 1591 battery 0 chiller 1687 cold_storage 3654 electrolyser 111 h2_tank 21
+2026-10-14 23:46:32,733 INFO run: building model, band 24-25 C
+2026-10-14 23:47:39,563 INFO   cost 260107 USD/y | pv 1591 battery -0 chiller 1731 cold_storage 2864 electrolyser 111 h2_tank 22
+2026-10-14 23:47:39,563 INFO run: building model, band 23-25 C
+2026-10-14 23:48:36,774 INFO   cost 258844 USD/y | pv 1591 battery -0 chiller 1777 cold_storage 2516 electrolyser 111 h2_tank 21
+2026-10-14 23:48:36,774 INFO run: building model, band 22-25 C
+2026-10-14 23:50:04,838 INFO   cost 258419 USD/y | pv 1591 battery -0 chiller 1814 cold_storage 2337 electrolyser 111 h2_tank 22
+2026-10-14 23:50:04,839 INFO run: chilled-water storage 50 USD/kWh
+2026-10-14 23:51:03,477 INFO   cost 261861 USD/y | pv 1591 battery -0 chiller 1611 cold_storage 967 electrolyser 111 h2_tank 21
+2026-10-14 23:51:03,477 INFO run: chilled-water storage 250 USD/kWh
+2026-10-14 23:52:07,142 INFO   cost 263628 USD/y | pv 1591 battery 0 chiller 1608 cold_storage 0 electrolyser 111 h2_tank 21
+2026-10-14 23:52:07,142 INFO run: battery 200 USD/kWh
+2026-10-14 23:53:42,622 INFO   cost 258822 USD/y | pv 1591 battery -0 chiller 1778 cold_storage 2526 electrolyser 111 h2_tank 22
+2026-10-14 23:53:42,622 INFO run: battery 500 USD/kWh
+2026-10-14 23:54:40,741 INFO   cost 258796 USD/y | pv 1591 battery 0 chiller 1777 cold_storage 2526 electrolyser 111 h2_tank 21
+2026-10-14 23:54:40,741 INFO done in 23.7 min

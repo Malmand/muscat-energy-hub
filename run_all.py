@@ -40,7 +40,7 @@ def main():
         if not a.skip_checks:
             pv_y = {"P0": weather.pv_per_kwp(w, "P0"), "P1": weather.pv_per_kwp(w, "P1")}
             for msg in (checks.check_weather(w), checks.check_pv(pv_y), checks.check_calibration(),
-                        checks.check_building_in_optimisation(rw, pv)):
+                        checks.check_scaling(rw, pv), checks.check_building_in_optimisation(rw, pv)):
                 log.info("check: %s", msg)
             if not a.quick:
                 for msg in checks.check_representative_weeks(w, rw, pv_y, pv):

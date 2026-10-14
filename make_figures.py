@@ -111,14 +111,14 @@ def fig4():
         return
     d = pd.read_csv(f)
     corr = pd.read_csv(RES / "uncertainty_correlations.csv", index_col=0)
-    fig, ax = subplots(1, 3, figsize=(7.6, 2.9), gridspec_kw={"width_ratios": [0.8, 1, 1]})
+    fig, ax = subplots(1, 3, figsize=(7.8, 2.9), gridspec_kw={"width_ratios": [1.0, 1, 1]})
     rng = np.random.default_rng(0)
     for i, (col, name, c) in enumerate([("regret_pct", "Regret of\nsimple design", C["vermillion"]),
                                         ("flex_saving_pct", "Saving from\nthermal mass", C["blue"])]):
         x = d[col].dropna()
         ax[0].boxplot(x, positions=[i], widths=0.5, showfliers=False, medianprops={"color": "k"})
         ax[0].plot(i + rng.uniform(-0.12, 0.12, len(x)), x, "o", color=c, ms=3, alpha=0.8)
-    ax[0].set_xticks([0, 1], ["Regret of\nsimple design", "Saving from\nthermal mass"], fontsize=6.5)
+    ax[0].set_xticks([0, 1], ["Regret of\nsimple\ndesign", "Saving\nfrom thermal\nmass"], fontsize=6.5)
     ax[0].set_ylabel("% of annual cost")
     ax[0].set_ylim(bottom=0)
     for a, col, title in ((ax[1], "regret_pct", "Regret"), (ax[2], "flex_saving_pct", "Thermal-mass saving")):

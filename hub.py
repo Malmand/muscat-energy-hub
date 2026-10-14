@@ -17,9 +17,12 @@ Every component has a simple and a detailed model (`fid`); all numbers come from
                E1 stack energy 53.2 kWh/kg plus balance-of-plant drawn whenever on, 10 % minimum load
   building     B0 load from the thermostat simulation   B1 2R2C model inside the optimisation, comfort band
 """
+import os
+
 import numpy as np
 import pyomo.environ as pyo
 from pyomo.contrib.appsi.base import TerminationCondition
+from pyomo.contrib.appsi.solvers import Highs
 
 import building as bld
 import params as p
@@ -197,14 +200,10 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     return m
 
 
-import os
-
-
 def _lp(m, threads, time_limit, load=False, extra=None):
     """Solve m (no free binaries) as an LP; returns the objective or None. Tries dual simplex, then dual
     and primal simplex, then interior point, each without presolve: in a few cases HiGHS solves the presolved LP but
-    its postsolve breaks down."""
-    from pyomo.contrib.appsi.solvers import Highs
+    its postsolve breaks down. HUB_DEBUG=1 streams the solver log."""
     for opts in ({}, {"presolve": "off"}, {"presolve": "off", "simplex_strategy": 4}, {"solver": "ipm", "presolve": "off"}):
         lp = Highs()
         lp.config.time_limit = time_limit
@@ -236,19 +235,20 @@ def _with_fixed(m, bins, values, fn):
 
 
 def solve(m, time_limit=900, gap=0.002, threads=None, log=None):
-    """HiGHS through Pyomo. Returns True if a solution was loaded.
+    """HiGHS through Pyomo. Returns True if a solution was loaded; m._solve_note records how.
 
     The only binaries are the electrolyser on/off decisions. HiGHS solves most cases to the requested gap.
     When it does not (time limit with a large gap, an incumbent rejected by its final feasibility check,
-    or no incumbent), a rounding heuristic takes over: the LP relaxation gives a lower bound and on/off
-    patterns rounded from it, each completed by an LP with the binaries fixed; the HiGHS incumbent, if
-    any, is completed the same way. The best of these is loaded and its distance to the LP bound logged."""
-    import os
-    from pyomo.contrib.appsi.solvers import Highs
+    or no incumbent), a rounding heuristic takes over. The LP relaxation gives a lower bound; on/off
+    patterns rounded from it, the HiGHS incumbent if any, and "always off" (always feasible, since
+    hydrogen can be bought) are each completed by an LP with the binaries fixed. The best is loaded and
+    its distance to the LP bound is recorded, so every result states how close to optimal it is."""
     threads = threads or max(1, min(len(os.sched_getaffinity(0)), os.cpu_count() or 2) - 1)
     bins = [v for v in m.component_data_objects(pyo.Var, active=True) if v.is_binary() and not v.fixed]
     if not bins:
-        return _lp(m, threads, time_limit, load=True) is not None
+        ok = _lp(m, threads, time_limit, load=True) is not None
+        m._solve_note = "LP optimal" if ok else "LP failed"
+        return ok
     opt = Highs()
     opt.config.time_limit = time_limit
     opt.config.load_solution = False
@@ -257,7 +257,7 @@ def solve(m, time_limit=900, gap=0.002, threads=None, log=None):
     tc = res.termination_condition
     if tc == TerminationCondition.optimal:
         opt.load_vars()
-        m._solve_note = "optimal"
+        m._solve_note = "MILP optimal"
         return True
     patterns = []
     sol = getattr(opt, "_sol", None)
@@ -275,21 +275,24 @@ def solve(m, time_limit=900, gap=0.002, threads=None, log=None):
     if relaxed is not None:
         for thr in (0.5, 1e-6, 0.99):
             patterns.append((f"rounded at {thr:g}", [1 if x >= thr else 0 for x in relaxed]))
+    patterns.append(("always off", [0] * len(bins)))
     best = None
     for name, pat in patterns:
         obj = _with_fixed(m, bins, pat, lambda: _lp(m, threads, time_limit))
         if obj is not None and (best is None or obj < best[1]):
             best = (name, obj, pat)
     if best is None:
+        m._solve_note = f"failed ({tc.name})"
         if log:
             log.warning("HiGHS returned %s and no on/off pattern could be completed", tc.name)
         return False
     _with_fixed(m, bins, best[2], lambda: _lp(m, threads, time_limit, load=True))
-    gap_lp = (best[1] - bound) / abs(bound) * 100 if bound else float("nan")
-    m._solve_note = f"{best[0]}, {gap_lp:.2f} % above LP bound"
+    if bound is not None:
+        m._solve_note = f"{best[0]}, {(best[1] - bound) / abs(bound) * 100:.2f} % above LP bound"
+    else:
+        m._solve_note = f"{best[0]}, LP bound unavailable"
     if log:
-        log.warning("HiGHS returned %s; using %s pattern, %.0f, %.2f %% above the LP relaxation bound",
-                    tc.name, best[0], best[1], gap_lp)
+        log.warning("HiGHS returned %s; using the %s pattern (%s)", tc.name, best[0], m._solve_note)
     return True
 
 
@@ -304,5 +307,5 @@ def summary(m):
                peak_import_kW=max(v(m.p_imp[t]) for t in m.T), cooling_MWh=ann(m.q_load) / 1e3,
                chiller_elec_MWh=ann(m.p_chiller) / 1e3, electrolyser_MWh=ann(m.p_el) / 1e3,
                h2_produced_t=ann(m.h2) / 1e3, h2_bought_kg=ann(m.h2_buy), comfort_Kh=ann(m.comfort_slack),
-               unmet_cooling_MWh=ann(m.cool_short) / 1e3)
+               unmet_cooling_MWh=ann(m.cool_short) / 1e3, solve_note=getattr(m, "_solve_note", ""))
     return out

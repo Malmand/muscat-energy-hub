@@ -45,6 +45,33 @@ def samples(n, seed=1):
     return keys, rows
 
 
+def evaluate(i, smp, rw, pv, log=None, time_limit=300, gap=0.005):
+    """All four cases for one sample; raises RuntimeError if any case has no solution."""
+    kw = dict(log=log, time_limit=time_limit, gap=gap)
+    with p.override(smp):
+        ms, s = sizing.optimize(rw, ex.LOW, pv, **kw)
+        el = s["size_electrolyser"]
+        sz = sizing.sizes_of(s)
+        _, d = sizing.optimize(rw, ex.HIGH, pv, sizes={"electrolyser": el}, **kw)
+        _, g = sizing.optimize(rw, ex.HIGH, pv, sizes=sz, **kw)
+        _, th = sizing.optimize(rw, {**ex.HIGH, "building": 0}, pv, sizes={"electrolyser": el}, t_set=25.0, **kw)
+    cases = dict(simple=s, detailed=d, regret=g, thermostat=th)
+    bad = [k for k, x in cases.items() if not np.isfinite(x["total_cost"])]
+    if bad:
+        raise RuntimeError(f"no solution for {', '.join(bad)}")
+    return dict(sample=i, **smp,
+                simple_cost=s["total_cost"], simple_tank=s["size_cold_storage"], simple_chiller=s["size_chiller"],
+                simple_battery=s["size_battery"],
+                detailed_cost=d["total_cost"], detailed_tank=d["size_cold_storage"],
+                detailed_chiller=d["size_chiller"], detailed_battery=d["size_battery"],
+                regret=g["total_cost"] - d["total_cost"], regret_pct=100 * (g["total_cost"] / d["total_cost"] - 1),
+                regret_unmet_cooling_MWh=g["unmet_cooling_MWh"], regret_comfort_Kh=g["comfort_Kh"],
+                regret_h2_bought_kg=g["h2_bought_kg"], regret_penalties=g["cost_other"],
+                thermostat_cost=th["total_cost"], thermostat_tank=th["size_cold_storage"],
+                flex_saving_pct=100 * (1 - d["total_cost"] / th["total_cost"]),
+                solve_notes="; ".join(f"{k}: {x.get('solve_note', '')}" for k, x in cases.items()))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=20)
@@ -66,26 +93,7 @@ def main():
             continue
         log.info("sample %d/%d", i + 1, a.n)
         try:
-            with p.override(smp):
-                _, s = sizing.optimize(rw, ex.LOW, pv, log=log, time_limit=300, gap=0.005)
-                el = s["size_electrolyser"]
-                sz = sizing.sizes_of(s)
-                _, d = sizing.optimize(rw, ex.HIGH, pv, sizes={"electrolyser": el}, log=log, time_limit=300, gap=0.005)
-                _, g = sizing.optimize(rw, ex.HIGH, pv, sizes=sz, log=log, time_limit=300, gap=0.005)
-                _, th = sizing.optimize(rw, {**ex.HIGH, "building": 0}, pv, sizes={"electrolyser": el}, log=log, t_set=25.0,
-                                       time_limit=300, gap=0.005)
-            if not all(np.isfinite(x["total_cost"]) for x in (s, d, g, th)):
-                raise RuntimeError("a case did not solve")
-            row = dict(sample=i, **smp,
-                       simple_cost=s["total_cost"], simple_tank=s["size_cold_storage"], simple_chiller=s["size_chiller"],
-                       simple_battery=s["size_battery"],
-                       detailed_cost=d["total_cost"], detailed_tank=d["size_cold_storage"],
-                       detailed_chiller=d["size_chiller"], detailed_battery=d["size_battery"],
-                       regret=g["total_cost"] - d["total_cost"], regret_pct=100 * (g["total_cost"] / d["total_cost"] - 1),
-                       regret_unmet_cooling_MWh=g["unmet_cooling_MWh"], regret_comfort_Kh=g["comfort_Kh"],
-                       regret_h2_bought_kg=g["h2_bought_kg"], regret_penalties=g["cost_other"],
-                       thermostat_cost=th["total_cost"], thermostat_tank=th["size_cold_storage"],
-                       flex_saving_pct=100 * (1 - d["total_cost"] / th["total_cost"]))
+            row = evaluate(i, smp, rw, pv, log)
         except Exception as e:                          # keep going; the failed sample is logged and retried next run
             log.error("sample %d failed: %r", i, e)
             continue

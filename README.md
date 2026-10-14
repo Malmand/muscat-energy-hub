@@ -61,7 +61,17 @@ All on 12 representative weeks; costs are annualised investment and O&M plus net
 
 **Storage cost (step 3).** At the reference cost (30 USD/kWh, a large water tank) the tank and the buildings share the job. At 50 USD/kWh the tank shrinks to 967 kWh, and at 250 USD/kWh it disappears and the buildings do all the shifting (cost +1.8 %). Battery cost between 200 and 500 USD/kWh changes nothing: exports are paid at the bulk supply tariff and cold is cheaper to store than electricity.
 
-**Uncertainty.** The Latin hypercube analysis over all uncertain inputs (`uncertainty.py`) is being finalised; its results will be added here.
+**Uncertainty.** Twenty Latin hypercube samples over the 13 uncertain inputs (`results/uncertainty.csv`) test whether the two conclusions depend on the reference values.
+
+- The design found with simple models costs more to run in every sample: regret 1.4-11.4 % of the annual cost, median 3.2 %. The six highest values (4.6-11.4 %) are samples with a cheap battery, where the lossless battery model builds a battery that the detailed model never does; without them the regret is 1.4-6.3 %, median 2.1 %.
+- Using the thermal mass (23-25 C band against a 25 C thermostat) saves 0.4-7.9 % of the annual cost, median 2.4 %. In the 17 samples where a tank is worth building at all, it makes the tank 23-100 % smaller (median 53 %).
+- The value of the thermal mass is set almost entirely by what the alternative costs: its rank correlation with the chilled-water tank cost is 0.91. The regret depends most on the battery cost (-0.56) and the tank cost (+0.54).
+
+All 80 optimisations solved; four used the solver fallback and are within 0.05 % of the LP bound.
+
+![Uncertainty](figures/fig4_uncertainty.png)
+
+*A: regret of the simple design and saving from the thermal mass over the 20 samples (box: quartiles, whiskers: 1.5 interquartile range). B, C: Spearman rank correlation of each with the six most influential inputs.*
 
 **What this means for a sizing study.** Simple linear models are adequate for PV, chiller, battery and electrolyser *sizing* here; their detail moves the cost estimate (PV and chiller by 4-5 %) but hardly the design. The simplification that costs money is treating the cooling demand as fixed: it hides the thermal mass, so the design over-sizes the chilled-water tank and the chiller.
 
@@ -81,22 +91,23 @@ python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\
 pip install -r requirements.txt
 python calibrate_villa.py          # writes data/villa_calibration.json (seconds)
 python run_all.py --quick          # installation test: two weeks, 1-2 min
-python run_all.py                  # full study: about 30 min on 2 cores
-python uncertainty.py --n 20       # uncertainty analysis, about 1 h on 2 cores
+python run_all.py                  # full study: about 25 min on 2 cores
+python uncertainty.py --n 20       # uncertainty analysis: about 1 h on 2 cores
 python make_figures.py
 python make_params_table.py        # docs/parameters.md from params.py
+pip install pytest && python -m pytest tests/test_hub_solver.py   # solver regression tests, about 15 min
 
 # OMEGAlpes extension, tests and cross-check, in a separate environment
 # (OMEGAlpes 0.5 needs PuLP 2 and pandas 2.2)
 python -m venv .venv-omg && .venv-omg/bin/pip install -r requirements-omegalpes.txt pytest
-.venv-omg/bin/python -m pytest tests
+.venv-omg/bin/python -m pytest tests/test_omegalpes_units.py
 python crosscheck_inputs.py
 .venv-omg/bin/python omegalpes_crosscheck.py
 ```
 
 Run times are for a 2-core cloud machine; a recent laptop with 4-8 cores is at most about twice as fast, because most of the time is spent in single-threaded MILP branching.
 
-**Safeguards.** `run_all.py` first runs `checks.py`: weather completeness and plausibility, PV yield, the building calibration, an equation-level check that the building model inside the optimisation reproduces the stand-alone thermostat simulation, and the representative weeks against the full year. Every case is written to `results/*.csv` as soon as it finishes and a rerun skips finished cases, so an interrupted run resumes where it stopped. When HiGHS does not reach the requested gap on a MILP (time limit, or an incumbent rejected by its final feasibility check), the solver falls back to the LP relaxation, rounds the electrolyser on/off pattern, completes it with an LP and logs the distance to the relaxation bound. Everything is logged to `results/run.log`.
+**Safeguards.** `run_all.py` first runs `checks.py`: weather completeness and plausibility, PV yield, the building calibration, the scaling of the constraint matrix (coefficients must stay within 1e4 and a ratio of 1e5; the building equations are written in kW per villa for this reason), an equation-level check that the building model inside the optimisation reproduces the stand-alone thermostat simulation, and the representative weeks against the full year. Every case is written to `results/*.csv` as soon as it finishes and a rerun skips finished cases, so an interrupted run resumes where it stopped. When HiGHS does not reach the requested gap on a MILP (time limit, or an incumbent rejected by its final feasibility check), the solver falls back to the LP relaxation: on/off patterns rounded from it, the HiGHS incumbent and "always off" are each completed by an LP, the best is kept, and its distance to the LP bound is written next to the result (`solve_note`). `tests/test_hub_solver.py` keeps the cases that once failed as regression tests (about 15 min). Everything is logged to `results/run.log`.
 
 ## Limitations
 
@@ -121,6 +132,6 @@ checks.py               consistency checks
 run_all.py              runs everything with logging
 make_figures.py         figures
 omegalpes_ext/          AirCooledChiller and PEMElectrolyser units for OMEGAlpes
-tests/                  unit tests of the OMEGAlpes units
+tests/                  OMEGAlpes unit tests and solver regression tests
 crosscheck_inputs.py, omegalpes_crosscheck.py   OMEGAlpes system cross-check
 ```

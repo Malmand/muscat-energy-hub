@@ -31,6 +31,22 @@ def check_calibration():
     return f"villa calibration ok: cooled fraction {f:.2f}"
 
 
+def check_scaling(rw, pv, max_ratio=1e5, max_abs=1e4):
+    """HiGHS becomes unreliable on badly scaled models (its presolve and postsolve were seen to break down
+    when the building equations were written in W next to kW elsewhere). The constraint matrix of the
+    most detailed model must stay within these limits. Run on the first two days to keep it fast."""
+    from pyomo.repn import generate_standard_repn
+    sub = rw[rw.block == rw.block.iloc[0]].iloc[:48]
+    m = hub.build(sub, {**hub.default_fid(1)}, {k: v[:48] for k, v in pv.items()}, el_rated=50.0)
+    coefs = []
+    for c in m.component_data_objects(pyo.Constraint, active=True):
+        repn = generate_standard_repn(c.body, compute_values=True)
+        coefs += [abs(x) for x in repn.linear_coefs if x != 0]
+    lo, hi = min(coefs), max(coefs)
+    assert hi <= max_abs and hi / lo <= max_ratio, f"matrix coefficients span {lo:.1e} to {hi:.1e}"
+    return f"scaling ok: matrix coefficients between {lo:.1e} and {hi:.1e}"
+
+
 def check_building_in_optimisation(rw, pv):
     """The 2R2C equations inside the optimisation must reproduce the thermostat simulation: with the
     cooling fixed to the simulated load, the optimised indoor temperature must follow the simulated one."""
@@ -73,6 +89,6 @@ if __name__ == "__main__":
     import experiments
     w, rw, pv = experiments.inputs()
     pv_y = {"P0": weather.pv_per_kwp(w, "P0"), "P1": weather.pv_per_kwp(w, "P1")}
-    for msg in (check_weather(w), check_pv(pv_y), check_calibration(), check_building_in_optimisation(rw, pv),
+    for msg in (check_weather(w), check_pv(pv_y), check_calibration(), check_scaling(rw, pv), check_building_in_optimisation(rw, pv),
                 *check_representative_weeks(w, rw, pv_y, pv)):
         print(msg)

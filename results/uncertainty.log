@@ -1,0 +1,54 @@
+2026-10-14 23:31:02,583 INFO sample 1/20
+2026-10-14 23:31:42,721 INFO   regret 9.2 % | flexibility saving 4.7 % | tank simple 1228, detailed 0, thermostat 1157 kWh
+2026-10-14 23:31:42,721 INFO sample 2/20
+2026-10-14 23:32:48,637 INFO   regret 1.8 % | flexibility saving 0.8 % | tank simple 1959, detailed 959, thermostat 1898 kWh
+2026-10-14 23:32:48,637 INFO sample 3/20
+2026-10-14 23:33:34,370 INFO   regret 1.5 % | flexibility saving 1.8 % | tank simple 2465, detailed 775, thermostat 2492 kWh
+2026-10-14 23:33:34,370 INFO sample 4/20
+2026-10-14 23:40:34,379 WARNING HiGHS returned maxTimeLimit; using the rounded at 0.5 pattern (rounded at 0.5, 0.00 % above LP bound)
+2026-10-14 23:40:45,305 INFO   regret 1.6 % | flexibility saving 0.8 % | tank simple 3192, detailed 3575, thermostat 5954 kWh
+2026-10-14 23:40:45,305 INFO sample 5/20
+2026-10-14 23:41:25,108 INFO   regret 9.5 % | flexibility saving 5.7 % | tank simple 488, detailed -0, thermostat -0 kWh
+2026-10-14 23:41:25,108 INFO sample 6/20
+2026-10-14 23:43:41,841 WARNING HiGHS returned error; using the rounded at 0.5 pattern (rounded at 0.5, 0.00 % above LP bound)
+2026-10-14 23:43:58,417 INFO   regret 3.9 % | flexibility saving 2.0 % | tank simple 2371, detailed 1418, thermostat 2442 kWh
+2026-10-14 23:43:58,417 INFO sample 7/20
+2026-10-14 23:50:02,797 WARNING HiGHS returned maxTimeLimit; using the rounded at 0.5 pattern (rounded at 0.5, -0.00 % above LP bound)
+2026-10-14 23:50:10,938 INFO   regret 6.3 % | flexibility saving 5.2 % | tank simple 1790, detailed 610, thermostat 1308 kWh
+2026-10-14 23:50:10,938 INFO sample 8/20
+2026-10-14 23:50:52,038 INFO   regret 1.9 % | flexibility saving 1.8 % | tank simple 1061, detailed 410, thermostat 1245 kWh
+2026-10-14 23:50:52,038 INFO sample 9/20
+2026-10-14 23:51:26,962 INFO   regret 4.4 % | flexibility saving 4.3 % | tank simple -0, detailed -0, thermostat -0 kWh
+2026-10-14 23:51:26,962 INFO sample 10/20
+2026-10-14 23:56:06,781 WARNING HiGHS returned error; using the rounded at 1e-06 pattern (rounded at 1e-06, 0.05 % above LP bound)
+2026-10-14 23:56:24,166 INFO   regret 4.6 % | flexibility saving 0.7 % | tank simple 8205, detailed 4123, thermostat 5754 kWh
+2026-10-14 23:56:24,166 INFO sample 11/20
+2026-10-14 23:57:00,954 INFO   regret 1.4 % | flexibility saving 1.5 % | tank simple 3518, detailed 1144, thermostat 3071 kWh
+2026-10-14 23:57:00,954 INFO sample 12/20
+2026-10-14 23:57:35,606 INFO   regret 2.2 % | flexibility saving 1.2 % | tank simple 4304, detailed 2184, thermostat 2825 kWh
+2026-10-14 23:57:35,606 INFO sample 13/20
+2026-10-14 23:58:09,528 INFO   regret 2.4 % | flexibility saving 0.4 % | tank simple 4605, detailed 1585, thermostat 2616 kWh
+2026-10-14 23:58:09,528 INFO sample 14/20
+2026-10-14 23:58:45,413 INFO   regret 11.4 % | flexibility saving 5.3 % | tank simple 640, detailed -0, thermostat 450 kWh
+2026-10-14 23:58:45,413 INFO sample 15/20
+2026-10-15 00:00:00,021 INFO   regret 5.2 % | flexibility saving 7.9 % | tank simple 586, detailed 0, thermostat 328 kWh
+2026-10-15 00:00:00,022 INFO sample 16/20
+2026-10-15 00:00:46,670 INFO   regret 1.9 % | flexibility saving 2.8 % | tank simple 2694, detailed 399, thermostat 2526 kWh
+2026-10-15 00:00:46,670 INFO sample 17/20
+2026-10-15 00:01:59,464 INFO   regret 4.0 % | flexibility saving 2.9 % | tank simple 2361, detailed 1828, thermostat 2562 kWh
+2026-10-15 00:01:59,464 INFO sample 18/20
+2026-10-15 00:02:43,880 INFO   regret 2.0 % | flexibility saving 0.8 % | tank simple 6097, detailed 2990, thermostat 4252 kWh
+2026-10-15 00:02:43,880 INFO sample 19/20
+2026-10-15 00:03:30,145 INFO   regret 8.2 % | flexibility saving 4.7 % | tank simple 1967, detailed 0, thermostat 1831 kWh
+2026-10-15 00:03:30,145 INFO sample 20/20
+2026-10-15 00:04:04,577 INFO   regret 2.6 % | flexibility saving 3.5 % | tank simple -0, detailed -0, thermostat -0 kWh
+2026-10-15 00:04:04,589 INFO summary over 20 samples:
+       regret_pct  flex_saving_pct  detailed_tank  thermostat_tank  detailed_battery
+count       20.00            20.00          20.00            20.00              20.0
+mean         4.30             2.94        1099.91          2135.53               0.0
+std          3.06             2.11        1270.76          1726.97               0.0
+min          1.41             0.42          -0.00            -0.00              -0.0
+5%           1.52             0.69           0.00            -0.00               0.0
+50%          3.23             2.38         692.22          2169.91              -0.0
+95%          9.56             5.79        3602.47          5763.95               0.0
+max         11.39             7.86        4122.57          5953.86               0.0
