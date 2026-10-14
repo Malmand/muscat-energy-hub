@@ -84,7 +84,7 @@ def fig3():
     fig, ax = subplots(1, 2, figsize=(6.4, 2.6))
     ax[0].plot(b.low, (b.total_cost - ref.total_cost) / 1e3, "o-", color=C["blue"], lw=1, ms=4)
     ax[0].axhline(0, color="k", lw=0.5, ls=":")
-    ax[0].set(xlabel="Lower comfort limit (°C, upper 25 °C)", ylabel="Cost vs 25 °C thermostat (kUSD/y)")
+    ax[0].set(xlabel="Lower comfort limit (°C, upper 25 °C)", ylabel="Cost change (kUSD/y)")
     ax[0].invert_xaxis()
     ax[1].plot(b.low, b.size_cold_storage, "s-", color=C["orange"], lw=1, ms=4, label="Chilled-water tank (kWh)")
     ax[1].plot(b.low, b.size_chiller, "^--", color=C["green"], lw=1, ms=4, label="Chiller (kW)")
@@ -92,7 +92,7 @@ def fig3():
     ax[1].invert_xaxis()
     ax[1].legend(frameon=False, fontsize=6)
     for a, l in zip(ax, "AB"):
-        panel(a, l, x=-0.25)
+        panel(a, l, x=-0.25, y=1.08)
     save(fig, FIG / "fig3_thermal_mass.png")
 
 
