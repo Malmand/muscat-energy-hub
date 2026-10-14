@@ -1,0 +1,25 @@
+name: Fetch PVGIS typical meteorological year for Muscat
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fetch_weather.yml']
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download TMY (PVGIS 5.2, European Commission JRC)
+        run: |
+          mkdir -p data
+          curl -sS --retry 5 -o data/pvgis_tmy_muscat.json \
+            "https://re.jrc.ec.europa.eu/api/v5_2/tmy?lat=23.59&lon=58.41&outputformat=json"
+          head -c 400 data/pvgis_tmy_muscat.json
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add data/pvgis_tmy_muscat.json
+          git commit -m "PVGIS TMY for Muscat [skip ci]" || echo "nothing to commit"
+          git push
