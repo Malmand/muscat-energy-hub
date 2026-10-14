@@ -4,3 +4,4 @@ results_quick/
 results/old/
 results/uncertainty_quick*
 .pytest_cache/
+results/*_quick.csv
