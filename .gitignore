@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 results_quick/
+results/old/
+results/uncertainty*
+.pytest_cache/

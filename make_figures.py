@@ -96,5 +96,42 @@ def fig3():
     save(fig, FIG / "fig3_thermal_mass.png")
 
 
+LABELS = {"pv_capex": "PV cost", "bat_capex": "Battery cost", "chiller_cop_rated": "Chiller rated COP",
+          "chiller_approach": "Condenser approach", "chiller_capex": "Chiller cost", "tes_capex": "Chilled-water tank cost",
+          "el_capex": "Electrolyser cost", "h2_tank_capex": "H$_2$ tank cost", "villa_measured_kwh_m2": "Villa consumption",
+          "import_price": "Import price", "export_scale": "Export tariff level", "discount_rate": "Discount rate",
+          "h2_backup_price": "Backup H$_2$ price"}
+
+
+def fig4():
+    """Uncertainty: distribution of the two conclusions over the Latin hypercube samples, and which
+    inputs drive them (Spearman rank correlation)."""
+    f = RES / "uncertainty.csv"
+    if not (f.exists() and (RES / "uncertainty_correlations.csv").exists()):
+        return
+    d = pd.read_csv(f)
+    corr = pd.read_csv(RES / "uncertainty_correlations.csv", index_col=0)
+    fig, ax = subplots(1, 3, figsize=(7.6, 2.9), gridspec_kw={"width_ratios": [0.8, 1, 1]})
+    rng = np.random.default_rng(0)
+    for i, (col, name, c) in enumerate([("regret_pct", "Regret of\nsimple design", C["vermillion"]),
+                                        ("flex_saving_pct", "Saving from\nthermal mass", C["blue"])]):
+        x = d[col].dropna()
+        ax[0].boxplot(x, positions=[i], widths=0.5, showfliers=False, medianprops={"color": "k"})
+        ax[0].plot(i + rng.uniform(-0.12, 0.12, len(x)), x, "o", color=c, ms=3, alpha=0.8)
+    ax[0].set_xticks([0, 1], ["Regret of\nsimple design", "Saving from\nthermal mass"], fontsize=6.5)
+    ax[0].set_ylabel("% of annual cost")
+    ax[0].set_ylim(bottom=0)
+    for a, col, title in ((ax[1], "regret_pct", "Regret"), (ax[2], "flex_saving_pct", "Thermal-mass saving")):
+        r = corr[col].dropna().sort_values(key=abs, ascending=True).tail(6)
+        a.barh(range(len(r)), r.values, color=[C["vermillion"] if v > 0 else C["blue"] for v in r.values],
+               edgecolor="k", lw=0.4)
+        a.set_yticks(range(len(r)), [LABELS.get(k, k) for k in r.index], fontsize=6.5)
+        a.axvline(0, color="k", lw=0.6)
+        a.set(xlim=(-1, 1), xlabel=f"Rank correlation with\n{title.lower()} (Spearman)")
+    for a, l in zip(ax, "ABC"):
+        panel(a, l, x=-0.3 if l == "A" else -0.62)
+    save(fig, FIG / "fig4_uncertainty.png")
+
+
 if __name__ == "__main__":
-    fig1(); fig2(); fig3()
+    fig1(); fig2(); fig3(); fig4()

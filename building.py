@@ -46,10 +46,13 @@ def facade_irradiance(w):
 
 
 def cooled_fraction():
+    """Calibrated cooled share of the villa. If the measured intensity is changed (uncertainty runs), the
+    share is rescaled: cooling electricity is linear in it, lighting and equipment are not."""
     import json
     from pathlib import Path
-    f = Path(__file__).parent / "data" / "villa_calibration.json"
-    return json.loads(f.read_text())["cooled_fraction"]
+    c = json.loads((Path(__file__).parent / "data" / "villa_calibration.json").read_text())
+    target = p.v("villa_measured_kwh_m2")
+    return c["cooled_fraction"] * (target - c["lighting_equipment_kwh_m2"]) / (c["calibrated_kwh_m2"] - c["lighting_equipment_kwh_m2"])
 
 
 def gains(w, hour, cooled_fraction=None):

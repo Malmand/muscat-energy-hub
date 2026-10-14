@@ -19,6 +19,7 @@ Every component has a simple and a detailed model (`fid`); all numbers come from
 """
 import numpy as np
 import pyomo.environ as pyo
+from pyomo.contrib.appsi.base import TerminationCondition
 
 import building as bld
 import params as p
@@ -76,7 +77,7 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     prev = np.array([last_of[block[t]] if first[t] else t - 1 for t in T])     # each block is cyclic
     nv = bld.N_VILLAS
     price_imp = p.v("import_price")
-    price_exp = np.array(p.v("export_price_monthly"))[month - 1] / 1000 * p.v("omr_usd")
+    price_exp = p.export_price(w.index)
 
     m = pyo.ConcreteModel()
     m.T = pyo.RangeSet(0, n - 1)
@@ -90,6 +91,9 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     m.p_imp = pyo.Var(m.T, within=pyo.NonNegativeReals)
     m.p_exp = pyo.Var(m.T, within=pyo.NonNegativeReals)
     m.pv_lim = pyo.Constraint(m.T, rule=lambda m, t: m.p_pv[t] <= pv[t] * m.size["pv"])
+    # only own PV generation can be exported (Sahim scheme); this also rules out buying from the grid to
+    # resell, which would be unbounded whenever a sampled export tariff exceeds the import price
+    m.exp_lim = pyo.Constraint(m.T, rule=lambda m, t: m.p_exp[t] <= m.p_pv[t])
     # PV on the villa roofs only: the export tariff is above the annualised PV cost, so without this limit
     # the optimum would be unbounded
     m.pv_roof = pyo.Constraint(expr=m.size["pv"] <= pv_roof_limit())
@@ -110,8 +114,8 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
 
     # buildings: cooling load of the community (kW cold)
     q_air, q_mass, _ = bld.gains(w, hour)
-    m.comfort_slack = pyo.Var(m.T, within=pyo.NonNegativeReals)
-    m.q_heat = pyo.Var(m.T, within=pyo.NonNegativeReals)
+    m.comfort_slack = pyo.Var(m.T, bounds=(0.0, 30.0))       # K above the band
+    m.q_heat = pyo.Var(m.T, bounds=(0.0, 20.0))              # kW per villa; only to keep cool winter hours feasible
     if fid["building"] == 0:
         qc, _ = bld.simulate_periodic(T_ext, q_air, q_mass, block, T_set=t_set)
         m.q_load = pyo.Param(m.T, initialize=dict(enumerate(qc / 1e3 * nv)))
@@ -119,6 +123,8 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
         m.q_heat.fix(0)
     else:
         z = bld.zone()
+        # equations written in kW per villa (W / 1e3) so the matrix is well scaled for HiGHS
+        z = {k: val / 1e3 for k, val in z.items()}
         a_i, a_m = z["C_i"] / bld.DT, z["C_m"] / bld.DT
         # in cool hours the unconditioned villa floats below the band (there is no heating): the lower
         # comfort bound is then the free-running temperature, computed without any cooling
@@ -127,11 +133,11 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
         m.Ti = pyo.Var(m.T, bounds=(10.0, 40.0))
         m.Tm = pyo.Var(m.T, bounds=(5.0, 50.0))
         m.q_load = pyo.Var(m.T, within=pyo.NonNegativeReals)
-        qv = lambda m, t: m.q_load[t] * 1e3 / nv
+        qv = lambda m, t: m.q_load[t] / nv
         m.air = pyo.Constraint(m.T, rule=lambda m, t: a_i * (m.Ti[t] - m.Ti[prev[t]]) == z["H_ie"] * (T_ext[t] - m.Ti[t])
-                               + z["H_im"] * (m.Tm[t] - m.Ti[t]) + q_air[t] - qv(m, t) + m.q_heat[t])
+                               + z["H_im"] * (m.Tm[t] - m.Ti[t]) + q_air[t] / 1e3 - qv(m, t) + m.q_heat[t])
         m.mass = pyo.Constraint(m.T, rule=lambda m, t: a_m * (m.Tm[t] - m.Tm[prev[t]]) == z["H_im"] * (m.Ti[t] - m.Tm[t])
-                                + z["H_me"] * (T_ext[t] - m.Tm[t]) + q_mass[t])
+                                + z["H_me"] * (T_ext[t] - m.Tm[t]) + q_mass[t] / 1e3)
         m.c_hi = pyo.Constraint(m.T, rule=lambda m, t: m.Ti[t] <= band[1] + m.comfort_slack[t])
         m.c_lo = pyo.Constraint(m.T, rule=lambda m, t: m.Ti[t] >= lb[t])
 
@@ -185,29 +191,106 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     m.cost_other = pyo.Expression(expr=sum(wt[t] * (wear * (m.b_ch[t] + m.b_dis[t]) + p.v("h2_backup_price") * m.h2_buy[t]
                                                     + p.v("comfort_penalty") * nv * m.comfort_slack[t]
                                                     + p.v("unmet_cooling_penalty") * m.cool_short[t]) for t in T))
-    tiny = sum(wt[t] * 1e-4 * m.q_heat[t] for t in T)
+    tiny = sum(wt[t] * 0.1 * m.q_heat[t] for t in T)
     m.obj = pyo.Objective(expr=m.cost_inv + m.cost_energy + m.cost_other + tiny, sense=pyo.minimize)
     m._wt, m._cop = wt, cop
     return m
 
 
+import os
+
+
+def _lp(m, threads, time_limit, load=False, extra=None):
+    """Solve m (no free binaries) as an LP; returns the objective or None. Tries dual simplex, then dual
+    and primal simplex, then interior point, each without presolve: in a few cases HiGHS solves the presolved LP but
+    its postsolve breaks down."""
+    from pyomo.contrib.appsi.solvers import Highs
+    for opts in ({}, {"presolve": "off"}, {"presolve": "off", "simplex_strategy": 4}, {"solver": "ipm", "presolve": "off"}):
+        lp = Highs()
+        lp.config.time_limit = time_limit
+        lp.config.load_solution = False
+        lp.highs_options = {"threads": threads, **opts, **(extra or {})}
+        lp.config.stream_solver = bool(os.environ.get("HUB_DEBUG"))
+        res = lp.solve(m)
+        if os.environ.get("HUB_DEBUG"):
+            print("LP", opts, res.termination_condition)
+        if res.termination_condition == TerminationCondition.optimal:
+            if load:
+                lp.load_vars()
+            return res.best_feasible_objective
+    return None
+
+
+def _with_fixed(m, bins, values, fn):
+    """Fix the binaries and make them continuous, so HiGHS treats the problem as a pure LP (with fixed
+    integer columns it would still go through its MIP presolve, which is what failed in the first place)."""
+    for var, val in zip(bins, values):
+        var.domain = pyo.Reals
+        var.fix(val)
+    try:
+        return fn()
+    finally:
+        for var in bins:
+            var.unfix()
+            var.domain = pyo.Binary
+
+
 def solve(m, time_limit=900, gap=0.002, threads=None, log=None):
-    """HiGHS through Pyomo. MILP cases occasionally stall before a first feasible point; they are retried
-    with another seed and stronger primal heuristics. Returns True if a solution was loaded."""
+    """HiGHS through Pyomo. Returns True if a solution was loaded.
+
+    The only binaries are the electrolyser on/off decisions. HiGHS solves most cases to the requested gap.
+    When it does not (time limit with a large gap, an incumbent rejected by its final feasibility check,
+    or no incumbent), a rounding heuristic takes over: the LP relaxation gives a lower bound and on/off
+    patterns rounded from it, each completed by an LP with the binaries fixed; the HiGHS incumbent, if
+    any, is completed the same way. The best of these is loaded and its distance to the LP bound logged."""
     import os
-    threads = threads or max(1, (os.cpu_count() or 2) - 1)
-    for extra in ({}, {"random_seed": 7, "mip_heuristic_effort": 0.3}, {"random_seed": 13, "mip_heuristic_effort": 0.6}):
-        opt = pyo.SolverFactory("appsi_highs")
-        opt.config.time_limit = time_limit
-        opt.config.load_solution = True
-        opt.highs_options = {"mip_rel_gap": gap, "threads": threads, **extra}
-        try:
-            opt.solve(m)
-            return True
-        except RuntimeError as e:
-            if log:
-                log.warning("solver did not return a solution (%s); retrying with %s", str(e)[:80], extra or "defaults")
-    return False
+    from pyomo.contrib.appsi.solvers import Highs
+    threads = threads or max(1, min(len(os.sched_getaffinity(0)), os.cpu_count() or 2) - 1)
+    bins = [v for v in m.component_data_objects(pyo.Var, active=True) if v.is_binary() and not v.fixed]
+    if not bins:
+        return _lp(m, threads, time_limit, load=True) is not None
+    opt = Highs()
+    opt.config.time_limit = time_limit
+    opt.config.load_solution = False
+    opt.highs_options = {"mip_rel_gap": gap, "threads": threads}
+    res = opt.solve(m)
+    tc = res.termination_condition
+    if tc == TerminationCondition.optimal:
+        opt.load_vars()
+        m._solve_note = "optimal"
+        return True
+    patterns = []
+    sol = getattr(opt, "_sol", None)
+    if sol is not None and sol.value_valid:
+        cols = opt._pyomo_var_to_solver_var_map
+        patterns.append(("incumbent", [round(sol.col_value[cols[id(v)]]) for v in bins]))
+    for v in bins:
+        v.domain = pyo.UnitInterval
+    try:
+        bound = _lp(m, threads, time_limit, load=True)
+        relaxed = [pyo.value(v) for v in bins] if bound is not None else None
+    finally:
+        for v in bins:
+            v.domain = pyo.Binary
+    if relaxed is not None:
+        for thr in (0.5, 1e-6, 0.99):
+            patterns.append((f"rounded at {thr:g}", [1 if x >= thr else 0 for x in relaxed]))
+    best = None
+    for name, pat in patterns:
+        obj = _with_fixed(m, bins, pat, lambda: _lp(m, threads, time_limit))
+        if obj is not None and (best is None or obj < best[1]):
+            best = (name, obj, pat)
+    if best is None:
+        if log:
+            log.warning("HiGHS returned %s and no on/off pattern could be completed", tc.name)
+        return False
+    _with_fixed(m, bins, best[2], lambda: _lp(m, threads, time_limit, load=True))
+    gap_lp = (best[1] - bound) / abs(bound) * 100 if bound else float("nan")
+    m._solve_note = f"{best[0]}, {gap_lp:.2f} % above LP bound"
+    if log:
+        log.warning("HiGHS returned %s; using %s pattern, %.0f, %.2f %% above the LP relaxation bound",
+                    tc.name, best[0], best[1], gap_lp)
+    return True
 
 
 def summary(m):

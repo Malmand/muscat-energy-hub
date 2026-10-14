@@ -32,11 +32,21 @@ if __name__ == "__main__":
                cooling_kw=list(qc / 1e3 * bld.N_VILLAS), h2_demand=list(hub.h2_demand(hour)),
                annual={k: hub.annual_cost(k) for k in ("battery", "cold_storage", "h2_tank")},
                import_price=p.v("import_price"),
-               export_price=[p.v("export_price_monthly")[mo - 1] / 1000 * p.v("omr_usd") for mo in month],
+               export_price=list(p.export_price(wk.index)),
                h2_backup=p.v("h2_backup_price"), cop=p.v("chiller_cop_rated"), sec=p.v("el_sec_system"),
                tes_rate=p.v("tes_rate"),
                pyomo=dict(storage_and_operation_cost=ref["total_cost"] - inv_fixed, battery=ref["size_battery"],
                           cold_storage=ref["size_cold_storage"], h2_tank=ref["size_h2_tank"],
                           import_MWh=ref["import_MWh"], export_MWh=ref["export_MWh"]))
+    # detailed case: temperature-dependent chiller and on/off electrolyser (new OMEGAlpes units)
+    fid_d = {**ex.LOW, "chiller": 1, "electrolyser": 1}
+    md = hub.build(wk, fid_d, pvw, sizes=fixed, el_rated=fixed["electrolyser"])
+    assert hub.solve(md, gap=1e-6)
+    rd = hub.summary(md)
+    inp["cop_series"] = list(hub.chiller_cop(wk.T_ext.values, 1))
+    inp["sec_stack"], inp["min_load"] = p.v("el_sec_stack"), p.v("el_min_load")
+    inp["pyomo_detailed"] = dict(storage_and_operation_cost=rd["total_cost"] - inv_fixed, battery=rd["size_battery"],
+                                 cold_storage=rd["size_cold_storage"], h2_tank=rd["size_h2_tank"],
+                                 import_MWh=rd["import_MWh"], export_MWh=rd["export_MWh"])
     (OUT / "crosscheck_input.json").write_text(json.dumps(inp))
-    print(json.dumps(inp["pyomo"], indent=1), fixed)
+    print(json.dumps(inp["pyomo"], indent=1), json.dumps(inp["pyomo_detailed"], indent=1), fixed)

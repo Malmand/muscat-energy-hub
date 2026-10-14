@@ -1,26 +1,54 @@
 {
- "storage_and_operation_cost": {
-  "pyomo": 172179.77810800503,
-  "omegalpes": 172179.7783182579
+ "simple": {
+  "storage_and_operation_cost": {
+   "pyomo": 130462.65059615759,
+   "omegalpes": 130462.6508594279
+  },
+  "battery": {
+   "pyomo": -0.0,
+   "omegalpes": 0.0
+  },
+  "cold_storage": {
+   "pyomo": 9500.921362791303,
+   "omegalpes": 9500.9214
+  },
+  "h2_tank": {
+   "pyomo": 16.66666666666657,
+   "omegalpes": 16.666667
+  },
+  "import_MWh": {
+   "pyomo": 698.3903349773566,
+   "omegalpes": 698.3903342890144
+  },
+  "export_MWh": {
+   "pyomo": 243.70969411035162,
+   "omegalpes": 243.70969397578475
+  }
  },
- "battery": {
-  "pyomo": -0.0,
-  "omegalpes": 0.0
- },
- "cold_storage": {
-  "pyomo": 1081.848322500423,
-  "omegalpes": 1081.8483
- },
- "h2_tank": {
-  "pyomo": 16.66666666666667,
-  "omegalpes": 16.666667
- },
- "import_MWh": {
-  "pyomo": 1548.705579422504,
-  "omegalpes": 1548.7055773350014
- },
- "export_MWh": {
-  "pyomo": 1094.0249385555114,
-  "omegalpes": 1094.0249400011432
+ "detailed": {
+  "storage_and_operation_cost": {
+   "pyomo": 129070.54650465504,
+   "omegalpes": 129070.54597692522
+  },
+  "battery": {
+   "pyomo": -0.0,
+   "omegalpes": 0.0
+  },
+  "cold_storage": {
+   "pyomo": 9388.084245919641,
+   "omegalpes": 9388.0842
+  },
+  "h2_tank": {
+   "pyomo": 16.66666666666649,
+   "omegalpes": 16.666667
+  },
+  "import_MWh": {
+   "pyomo": 685.3563797097338,
+   "omegalpes": 685.356378837143
+  },
+  "export_MWh": {
+   "pyomo": 220.38437385469254,
+   "omegalpes": 220.3843728864286
+  }
  }
 }
