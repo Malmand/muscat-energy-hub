@@ -41,7 +41,7 @@ def pv_per_kwp(w, level="P1"):
     base = poa / 1000 * (1 - p.v("pv_system_loss"))
     if level == "P0":
         return base.values
-    t_cell = w.T_ext + (p.v("pv_noct") - 20.0) / 800.0 * poa
+    t_cell = w.T_ext + (p.v("pv_noct") - 20.0) / 800.0 * poa  # NOCT model: 20 degC, 800 W/m2
     return (base * (1 + p.v("pv_gamma") * (t_cell - 25.0))).clip(lower=0).values
 
 
@@ -56,12 +56,13 @@ def representative_weeks(w):
         best, err = None, np.inf
         for i in range(len(d) - 6):
             blk = d.iloc[i:i + 7]
+            # normalised distance to the monthly means
             e = abs(blk["T"].mean() - d["T"].mean()) / d["T"].std() + abs(blk["G"].mean() - d["G"].mean()) / d["G"].std()
             if e < err:
                 best, err = blk.index[0], e
         idx = (w.index.normalize().tz_localize(None) >= best) & (w.index.normalize().tz_localize(None) < best + pd.Timedelta(days=7))
         part = w[idx].copy()
         part["block"] = b
-        part["weight"] = len(d) / 7.0
+        part["weight"] = len(d) / 7.0  # days in month / 7
         parts.append(part)
     return pd.concat(parts)

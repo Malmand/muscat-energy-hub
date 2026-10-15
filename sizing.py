@@ -24,7 +24,7 @@ def optimize(w, fid, pv, sizes=None, el_start=60.0, log=None, **kw):
     tried = {}
 
     def cost(s):
-        s = max(round(float(s)), 10)
+        s = max(round(float(s)), 10)  # integer kW, at least 10
         if s not in tried:
             tried[s] = run(w, fid, pv, el=s, log=log, **kw)
             if log:

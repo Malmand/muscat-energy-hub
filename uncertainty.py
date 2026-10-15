@@ -34,6 +34,7 @@ LOG_SCALE = {"tes_capex"}
 def samples(n, seed=1):
     keys = [k for k, d in p.P.items() if d.get("low") is not None]
     rng = np.random.default_rng(seed)
+    # Latin hypercube: one sample per stratum and input
     u = (rng.permuted(np.tile(np.arange(n), (len(keys), 1)), axis=1).T + rng.random((n, len(keys)))) / n
     rows = []
     for i in range(n):
@@ -52,8 +53,9 @@ def evaluate(i, smp, rw, pv, log=None, time_limit=300, gap=0.005):
         ms, s = sizing.optimize(rw, ex.LOW, pv, **kw)
         el = s["size_electrolyser"]
         sz = sizing.sizes_of(s)
-        _, d = sizing.optimize(rw, ex.HIGH, pv, sizes={"electrolyser": el}, **kw)
-        _, g = sizing.optimize(rw, ex.HIGH, pv, sizes=sz, **kw)
+        _, d = sizing.optimize(rw, ex.HIGH, pv, sizes={"electrolyser": el}, **kw)  # detailed optimum
+        _, g = sizing.optimize(rw, ex.HIGH, pv, sizes=sz, **kw)  # simple design, detailed operation
+        # no thermal-mass flexibility
         _, th = sizing.optimize(rw, {**ex.HIGH, "building": 0}, pv, sizes={"electrolyser": el}, t_set=25.0, **kw)
     cases = dict(simple=s, detailed=d, regret=g, thermostat=th)
     bad = [k for k, x in cases.items() if not np.isfinite(x["total_cost"])]

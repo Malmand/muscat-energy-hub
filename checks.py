@@ -61,6 +61,7 @@ def check_building_in_optimisation(rw, pv):
     ti = np.array([pyo.value(m.Ti[t]) for t in m.T])
     err = np.abs(ti - ti_sim)
     cooled = qc > 0
+    # 99th percentile over cooled hours
     assert np.percentile(err[cooled], 99) < 0.1, f"indoor temperature differs by up to {err[cooled].max():.2f} K"
     return (f"building model ok: optimisation follows the simulation within {np.percentile(err[cooled], 99):.3f} K "
             f"(99th percentile, cooled hours)")

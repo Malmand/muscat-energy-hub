@@ -19,19 +19,20 @@ import params as p
 DT = 3600.0
 N_VILLAS = p.v("n_villas")
 _AF = p.v("villa_floor")
-_L, _W, _H = 19.2, 12.5, 3.35
+_L, _W, _H = 19.2, 12.5, 3.35  # m: footprint and storey height (paper)
 _wall_gross = {"S": _L * 2 * _H, "N": _L * 2 * _H, "E": _W * 2 * _H, "W": _W * 2 * _H}
 _win = {k: p.v("villa_window_ratio") * a for k, a in _wall_gross.items()}
 _wall = {k: _wall_gross[k] - _win[k] for k in _wall_gross}
-_ROOF = _AF / 2
+_ROOF = _AF / 2  # two storeys: roof = one floor
 _RSE = 0.04                                       # external surface resistance, ISO 6946
 _ALPHA_WALL, _ALPHA_ROOF = 0.6, 0.6               # solar absorptance of light render and tiles (assumption)
 
 VILLA = dict(
     C_i=p.v("villa_c_air") * _AF,
     C_m=p.v("villa_c_mass") * _AF,
+    # W/K; air rho cp = 1.2 x 1005
     H_ie=sum(_win.values()) * p.v("u_window") + p.v("villa_infiltration") * _AF * _H * 1.2 * 1005 / 3600,
-    H_im=9.1 * 3.5 * _AF,
+    H_im=9.1 * 3.5 * _AF,  # ISO 13790: h_ms x A_m/A_f
     H_me=sum(_wall.values()) * p.v("u_wall") + _ROOF * p.v("u_roof"),
 )
 
@@ -62,6 +63,7 @@ def gains(w, hour, cooled_fraction=None):
     phi = cooled_fraction if cooled_fraction is not None else globals()["cooled_fraction"]()
     irr = facade_irradiance(w)
     q_win = sum(_win[k] * p.v("shgc_window") * irr[k] for k in irr)
+    # sol-air gain: alpha U Rse A G
     q_opaque = (sum(_ALPHA_WALL * p.v("u_wall") * _RSE * _wall[k] * irr[k] for k in irr)
                 + _ALPHA_ROOF * p.v("u_roof") * _RSE * _ROOF * w.ghi.values)
     home = np.where((hour >= 16) | (hour < 7), 1.0, 0.5)                   # occupancy profile (assumption)
@@ -82,19 +84,21 @@ def simulate_setpoint(T_ext, q_air, q_mass, T_set=24.0, T_heat=20.0, cooled_frac
     pp = zone(cooled_fraction)
     n = len(T_ext)
     Ti, qc = np.zeros(n), np.zeros(n)
-    ti, tm = T_set, T_set + 1
+    ti, tm = T_set, T_set + 1  # arbitrary initial state
     a_i, a_m = pp["C_i"] / DT, pp["C_m"] / DT
     for k in range(n):
+        # implicit Euler, air held at T_set
         tm_new = (a_m * tm + pp["H_im"] * T_set + pp["H_me"] * T_ext[k] + q_mass[k]) / (a_m + pp["H_im"] + pp["H_me"])
+        # cooling needed to hold T_set
         q = a_i * (ti - T_set) + pp["H_ie"] * (T_ext[k] - T_set) + pp["H_im"] * (tm_new - T_set) + q_air[k]
-        if q >= 0:
+        if q >= 0:  # cooling on
             ti_new, qc[k] = T_set, q
         else:
             A = np.array([[a_i + pp["H_ie"] + pp["H_im"], -pp["H_im"]],
                           [-pp["H_im"], a_m + pp["H_im"] + pp["H_me"]]])
             b = np.array([a_i * ti + pp["H_ie"] * T_ext[k] + q_air[k], a_m * tm + pp["H_me"] * T_ext[k] + q_mass[k]])
             ti_new, tm_new = np.linalg.solve(A, b)
-            ti_new = max(ti_new, T_heat)
+            ti_new = max(ti_new, T_heat)  # no heating: floor only
         ti, tm = ti_new, tm_new
         Ti[k] = ti
     return qc, Ti
@@ -108,5 +112,5 @@ def simulate_periodic(T_ext, q_air, q_mass, block, T_set=24.0, repeats=4):
         i = np.where(block == b)[0]
         rep = lambda x: np.tile(x[i], repeats)
         q, t = simulate_setpoint(rep(T_ext), rep(q_air), rep(q_mass), T_set=T_set)
-        qc[i], ti[i] = q[-len(i):], t[-len(i):]
+        qc[i], ti[i] = q[-len(i):], t[-len(i):]  # keep the last, periodic repeat
     return qc, ti

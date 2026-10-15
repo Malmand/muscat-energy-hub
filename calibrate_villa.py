@@ -24,7 +24,7 @@ if __name__ == "__main__":
     e_int = el_int.sum() / 1e3                       # kWh
     e_cool_full = (qc / p.v("ac_cop_split")).sum() / 1e3
     target = p.v("villa_measured_kwh_m2") * af
-    frac = (target - e_int) / e_cool_full
+    frac = (target - e_int) / e_cool_full  # cooling scales linearly with the share
     res = dict(cooled_fraction=frac, full_villa_kwh_m2=(e_cool_full + e_int) / af,
                calibrated_kwh_m2=(frac * e_cool_full + e_int) / af, lighting_equipment_kwh_m2=e_int / af,
                cooling_kwh_th_per_villa=frac * qc.sum() / 1e3, peak_cooling_kw_per_villa=frac * qc.max() / 1e3)

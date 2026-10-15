@@ -150,5 +150,5 @@ def export_price(index):
             r = wkend if ts.dayofweek in (4, 5) else wkday      # Friday and Saturday
         else:
             r = off
-        out[i] = r / 1000 * P["omr_usd"]["value"] * P["export_scale"]["value"]
+        out[i] = r / 1000 * P["omr_usd"]["value"] * P["export_scale"]["value"]  # OMR/MWh -> USD/kWh
     return out

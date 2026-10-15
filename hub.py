@@ -39,12 +39,12 @@ def annual_cost(k, overrides=None):
     o = overrides or {}
     capex = o.get(_CAPEX[k], p.v(_CAPEX[k]))
     r, n = p.v("discount_rate"), p.v(_LIFE[k])
-    return capex * (r / (1 - (1 + r) ** -n) + _OM[k])
+    return capex * (r / (1 - (1 + r) ** -n) + _OM[k])  # annuity + fixed O&M
 
 
 def h2_demand(hour):
     d = np.zeros(24)
-    d[[22, 23, 0, 1]] = p.v("h2_demand_kg_day") / 4
+    d[[22, 23, 0, 1]] = p.v("h2_demand_kg_day") / 4  # night refuelling 22:00-02:00
     return d[hour]
 
 
@@ -53,7 +53,7 @@ def chiller_cop(T_ext, level):
     if level == 0:
         return np.full(len(T_ext), rated)
     te = p.v("chiller_t_evap") + 273.15
-    carnot = lambda ta: te / (ta + p.v("chiller_approach") + 273.15 - te)
+    carnot = lambda ta: te / (ta + p.v("chiller_approach") + 273.15 - te)  # condensing = outdoor + approach
     eta2 = rated / carnot(35.0)                    # second-law efficiency fixed at the AHRI rating point
     return eta2 * carnot(np.asarray(T_ext))
 
@@ -74,7 +74,7 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     month = w.index.month.values
     T_ext = w.T_ext.values
     block = w["block"].values if "block" in w else np.zeros(n, int)
-    wt = w["weight"].values if "weight" in w else np.full(n, 8760.0 / n)
+    wt = w["weight"].values if "weight" in w else np.full(n, 8760.0 / n)  # hours each step stands for
     first = np.r_[True, block[1:] != block[:-1]]
     last_of = {b: np.where(block == b)[0][-1] for b in np.unique(block)}
     prev = np.array([last_of[block[t]] if first[t] else t - 1 for t in T])     # each block is cyclic
@@ -108,6 +108,7 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     if fid["battery"] == 0:
         eff, smin, crate = 1.0, 0.0, 1.0
     else:
+        # RTE split equally over charge and discharge
         eff, smin, crate = np.sqrt(p.v("bat_rte")), p.v("bat_soc")[0], p.v("bat_crate")
     m.b_bal = pyo.Constraint(m.T, rule=lambda m, t: m.b_e[t] == m.b_e[prev[t]] + eff * m.b_ch[t] - m.b_dis[t] / eff)
     m.b_lo = pyo.Constraint(m.T, rule=lambda m, t: m.b_e[t] >= smin * m.size["battery"])
@@ -132,8 +133,8 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
         # in cool hours the unconditioned villa floats below the band (there is no heating): the lower
         # comfort bound is then the free-running temperature, computed without any cooling
         _, ti_free = bld.simulate_periodic(T_ext, q_air, q_mass, block, T_set=60.0)
-        lb = np.minimum(band[0], ti_free)
-        m.Ti = pyo.Var(m.T, bounds=(10.0, 40.0))
+        lb = np.minimum(band[0], ti_free)  # lower bound never above free-running
+        m.Ti = pyo.Var(m.T, bounds=(10.0, 40.0))  # degC
         m.Tm = pyo.Var(m.T, bounds=(5.0, 50.0))
         m.q_load = pyo.Var(m.T, within=pyo.NonNegativeReals)
         qv = lambda m, t: m.q_load[t] / nv
@@ -158,7 +159,7 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     m.s_rout = pyo.Constraint(m.T, rule=lambda m, t: m.s_out[t] <= p.v("tes_rate") * m.size["cold_storage"])
     m.cool_short = pyo.Var(m.T, within=pyo.NonNegativeReals)     # unmet cooling, only possible for fixed designs
     m.cold = pyo.Constraint(m.T, rule=lambda m, t: m.q_ch[t] + m.s_out[t] + m.cool_short[t] == m.q_load[t] + m.s_in[t])
-    m.p_chiller = pyo.Expression(m.T, rule=lambda m, t: m.q_ch[t] / cop[t])
+    m.p_chiller = pyo.Expression(m.T, rule=lambda m, t: m.q_ch[t] / cop[t])  # kW electric
 
     # electrolyser and hydrogen
     dem = h2_demand(hour)
@@ -194,7 +195,7 @@ def build(w, fid, pv_profiles, sizes=None, el_rated=None, t_set=24.0, band=(23.0
     m.cost_other = pyo.Expression(expr=sum(wt[t] * (wear * (m.b_ch[t] + m.b_dis[t]) + p.v("h2_backup_price") * m.h2_buy[t]
                                                     + p.v("comfort_penalty") * nv * m.comfort_slack[t]
                                                     + p.v("unmet_cooling_penalty") * m.cool_short[t]) for t in T))
-    tiny = sum(wt[t] * 0.1 * m.q_heat[t] for t in T)
+    tiny = sum(wt[t] * 0.1 * m.q_heat[t] for t in T)  # small cost: heating only when needed
     m.obj = pyo.Objective(expr=m.cost_inv + m.cost_energy + m.cost_other + tiny, sense=pyo.minimize)
     m._wt, m._cop = wt, cop
     return m
@@ -204,6 +205,7 @@ def _lp(m, threads, time_limit, load=False, extra=None):
     """Solve m (no free binaries) as an LP; returns the objective or None. Tries dual simplex, then dual
     and primal simplex, then interior point, each without presolve: in a few cases HiGHS solves the presolved LP but
     its postsolve breaks down. HUB_DEBUG=1 streams the solver log."""
+    # fallback order, see docstring
     for opts in ({}, {"presolve": "off"}, {"presolve": "off", "simplex_strategy": 4}, {"solver": "ipm", "presolve": "off"}):
         lp = Highs()
         lp.config.time_limit = time_limit
@@ -265,7 +267,7 @@ def solve(m, time_limit=900, gap=0.002, threads=None, log=None):
         cols = opt._pyomo_var_to_solver_var_map
         patterns.append(("incumbent", [round(sol.col_value[cols[id(v)]]) for v in bins]))
     for v in bins:
-        v.domain = pyo.UnitInterval
+        v.domain = pyo.UnitInterval  # LP relaxation: lower bound
     try:
         bound = _lp(m, threads, time_limit, load=True)
         relaxed = [pyo.value(v) for v in bins] if bound is not None else None
@@ -273,7 +275,7 @@ def solve(m, time_limit=900, gap=0.002, threads=None, log=None):
         for v in bins:
             v.domain = pyo.Binary
     if relaxed is not None:
-        for thr in (0.5, 1e-6, 0.99):
+        for thr in (0.5, 1e-6, 0.99):  # rounding thresholds tried
             patterns.append((f"rounded at {thr:g}", [1 if x >= thr else 0 for x in relaxed]))
     patterns.append(("always off", [0] * len(bins)))
     best = None

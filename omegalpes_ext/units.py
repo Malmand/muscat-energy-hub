@@ -33,7 +33,7 @@ def carnot_cop(t_ext, cop_rated=2.96, t_rated=35.0, t_evap=2.0, approach=11.0):
     def carnot(ta):
         return te / (ta + approach + 273.15 - te)
 
-    eta = cop_rated / carnot(t_rated)
+    eta = cop_rated / carnot(t_rated)  # second-law efficiency at the rating point
     return [eta * carnot(float(ta)) for ta in t_ext]
 
 
@@ -77,7 +77,7 @@ class PEMElectrolyser(ConversionUnit):
             raise ValueError("need 0 < sec_stack <= sec_system")
         if not 0 <= min_load < 1:
             raise ValueError("min_load must be in [0, 1)")
-        self.p_rated, self.p_aux = p_rated, p_rated * (1 - sec_stack / sec_system)
+        self.p_rated, self.p_aux = p_rated, p_rated * (1 - sec_stack / sec_system)  # full load gives sec_system
         p_stack_max = p_rated - self.p_aux
         self.elec_consumption_unit = VariableConsumptionUnit(time, name + "_elec", p_max=p_rated, energy_type="Electrical")
         self.h2_production_unit = VariableProductionUnit(time, name + "_h2", energy_type=h2_energy_type)

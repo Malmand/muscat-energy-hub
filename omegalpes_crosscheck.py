@@ -37,6 +37,7 @@ def solve_week(detailed):
     imp = VariableProductionUnit(time, "grid_import", energy_type="Electrical", operating_cost=[d["import_price"] * wgt] * n)
     exp = VariableConsumptionUnit(time, "grid_export", energy_type="Electrical", operating_cost=[-x * wgt for x in d["export_price"]])
     exp.operating_cost.lb = -1e9      # OMEGAlpes bounds operating costs at zero; export revenue is a negative cost
+    # cyclic week, as in Pyomo
     bat = StorageUnit(time, "battery", capacity=None, energy_type="Electrical", ef_is_e0=True)
     # cooling: heat removed from the chilled-water loop
     loads = FixedProductionUnit(time, "villa_heat", p=d["cooling_kw"], energy_type="Thermal")
@@ -44,7 +45,7 @@ def solve_week(detailed):
         chiller = AirCooledChiller(time, "chiller", cop=d["cop_series"], capacity=fx["chiller"])
         ch_cold, ch_elec, ch_rej = chiller.cold_unit, chiller.elec_consumption_unit, chiller.reject_unit
     else:
-        chiller = HeatPump(time, "chiller", cop=d["cop"] + 1, pmax_in_therm=fx["chiller"])
+        chiller = HeatPump(time, "chiller", cop=d["cop"] + 1, pmax_in_therm=fx["chiller"])  # COP_heat = COP_cool + 1
         ch_cold, ch_elec, ch_rej = chiller.thermal_consumption_unit, chiller.elec_consumption_unit, chiller.thermal_production_unit
     tank = StorageUnit(time, "cw_tank", capacity=None, energy_type="Thermal", ef_is_e0=True)
     ambient = VariableConsumptionUnit(time, "ambient", energy_type="Thermal")
